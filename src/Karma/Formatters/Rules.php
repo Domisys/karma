@@ -7,11 +7,58 @@ use Karma\Formatter;
 class Rules implements Formatter
 {
     private
-        $rules;
+        $rules,
+        $emptyListStrategy;
     
     public function __construct(array $rules)
     {
+        $this->emptyListStrategy = self::KEEP_LINE;
+        
+        $rules = $this->extractEmptyListStrategyRule($rules);
         $this->convertRules($rules);
+    }
+    
+    private function extractEmptyListStrategyRule(array $rules)
+    {
+        $filteredRules = array();
+        $hasAlreadyMatched = false;
+        
+        foreach($rules as $value => $result)
+        {
+            if(strtolower(trim($value)) === '<emptylist>')
+            {
+                if($hasAlreadyMatched === true)
+                {
+                    throw new \RuntimeException('Duplicate <emptyList> entry in formatters');
+                }
+                
+                $this->setEmptyListStrategy(trim($result));
+                $hasAlreadyMatched = true;
+                
+                continue;
+            }
+            
+            $filteredRules[$value] = $result;
+        }
+        
+        return $filteredRules;
+    }
+    
+    public function setEmptyListStrategy($emptyListStrategy)
+    {
+        $emptyListStrategy = strtolower($emptyListStrategy);
+        
+        if(in_array($emptyListStrategy, array(self::KEEP_LINE, self::REMOVE_LINE)))
+        {
+            $this->emptyListStrategy = $emptyListStrategy;
+        }
+        
+        return $this;
+    }
+    
+    public function getEmptyListStrategy()
+    {
+        return $this->emptyListStrategy;
     }
     
     private function getSpecialValuesMappingTable()

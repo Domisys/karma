@@ -10,4 +10,9 @@ class Raw implements Formatter
     {
         return $value;
     }    
+    
+    public function getEmptyListStrategy()
+    {
+        return self::KEEP_LINE;
+    }
 }

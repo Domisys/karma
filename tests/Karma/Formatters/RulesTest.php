@@ -1,6 +1,7 @@
 <?php
 
 use Karma\Formatters\Rules;
+use Karma\Formatter;
 
 class RulesTests extends PHPUnit_Framework_TestCase
 {
@@ -15,7 +16,8 @@ class RulesTests extends PHPUnit_Framework_TestCase
             '<null>' => 0,
             'foobar' => 'barfoo',
             'footrue' => true,
-            ' <string> ' => '"<string>"', 
+            ' <string> ' => '"<string>"',
+            '<emptyList>' => '<removeLine>'
         );
         
         $this->formatter = new Rules($rules);
@@ -54,5 +56,60 @@ class RulesTests extends PHPUnit_Framework_TestCase
             'foobar' => array('foobar', 'barfoo'),
             'barfoobarfoo' => array('barfoobarfoo', '"barfoobarfoo"'),
         );    
+    }
+    
+    public function testNominalEmptyListStrategy()
+    {
+        $this->assertSame(Formatter::REMOVE_LINE, $this->formatter->getEmptyListStrategy());
+    }
+    
+    /**
+     * @dataProvider providerTestEmptyListStrategy
+     */
+    public function testEmptyListStrategy($value, $expected, $ruleCondition = '<emptyList>')
+    {
+        $rules = array($ruleCondition => $value);
+        $formatter = new Rules($rules);
+        
+        $this->assertSame($expected, $formatter->getEmptyListStrategy());
+    }
+    
+    public function providerTestEmptyListStrategy()
+    {
+        return array(
+            // OK
+            array('<keepLine>', Formatter::KEEP_LINE),
+            array('<removeLine>', Formatter::REMOVE_LINE),
+            array('<KEEPLINE>', Formatter::KEEP_LINE),
+            array('<REMOVELINE>', Formatter::REMOVE_LINE),
+            array('<keepline>', Formatter::KEEP_LINE),
+            array('<removeline>', Formatter::REMOVE_LINE),
+            
+            array('<keepLine>', Formatter::KEEP_LINE, '<EMPTYLIST>'),
+            array('<removeLine>', Formatter::REMOVE_LINE, '<EMPTYLIST>'),
+            array('<keepLine>', Formatter::KEEP_LINE, '<emptylist>'),
+            array('<removeLine>', Formatter::REMOVE_LINE, '<emptylist>'),
+            
+            // NOK
+            array('<AkeepLineB>', Formatter::KEEP_LINE),
+            array('<AremoveLineB>', Formatter::KEEP_LINE),
+            array('<removeLi>', Formatter::KEEP_LINE),
+            array('<r>', Formatter::KEEP_LINE),
+            array('keepLine', Formatter::KEEP_LINE),
+            array('removeLine', Formatter::KEEP_LINE),
+        );
+    }
+    
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testEmptyListStrategyError()
+    {
+        $rules = array(
+            '<emptyList>' => '<keepLine>',
+            '<emptyLIST>' => '<keepLine>',
+        );
+        
+        $formatter = new Rules($rules);
     }
 }
