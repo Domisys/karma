@@ -158,6 +158,11 @@ class Hydrator
                 {
                     $values = $this->reader->read($matches['variableName'], $environment);
                     
+                    if(empty($values) && $formatter->getEmptyListStrategy() === Formatter::REMOVE_LINE)
+                    {
+                        continue;
+                    }
+                    
                     $replacementCounter++; 
                     foreach($values as $value)
                     {

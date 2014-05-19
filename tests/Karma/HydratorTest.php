@@ -9,6 +9,7 @@ use Karma\ProfileReader;
 use Karma\FormatterProviders\NullProvider;
 use Karma\FormatterProviders\CallbackProvider;
 use Karma\Formatters\Rules;
+use Karma\Formatter;
 
 class HydratorTest extends PHPUnit_Framework_TestCase
 {
@@ -319,5 +320,41 @@ TXT;
             "windows" => array("line:\r\n - var=<%var%>\r\nend", "line:\r\n - var=42\r\n - var=51\r\nend"),    
             "mac" => array("line:\r - var=<%var%>\rend", "line:\r - var=42\r - var=51\rend"),
         );    
+    }
+    
+    /**
+     * @dataProvider providerTestEmptyList
+     */
+    public function testEmptyList($strategy, $expected)
+    {
+        $this->fs = new Filesystem(new InMemory());
+        $reader = new InMemoryReader(array(
+            'var:dev' => array(),
+        ));
+        
+        $this->hydrator = new Hydrator($this->fs, $reader, new Finder($this->fs));
+        
+        $this->write('a-dist', <<< FILE_CONTENT
+List:
+item = <%var%>
+FILE_CONTENT
+        );
+        
+        $formatter = new Rules(array('<emptyList>' => $strategy));
+        $this->hydrator->setFormatterProvider(new CallbackProvider(function ($index) use($formatter) {
+            return $formatter;
+        }));
+        
+        $this->hydrator->hydrate('dev');
+        $this->assertSame($expected, $this->fs->read('a'));        
+        
+    }
+    
+    public function providerTestEmptyList()
+    {
+        return array(
+            array(Formatter::KEEP_LINE, "List:\nitem = "),    
+            array(Formatter::REMOVE_LINE, "List:"),    
+        );
     }
 }
