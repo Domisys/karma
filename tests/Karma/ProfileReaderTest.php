@@ -5,6 +5,7 @@ use Gaufrette\Filesystem;
 use Gaufrette\Adapter\InMemory;
 use Karma\Application;
 use Gaufrette\Adapter;
+use Karma\Formatter;
 
 class ProfileReaderTest extends PHPUnit_Framework_TestCase
 {
@@ -133,6 +134,7 @@ formatters:
     <true>: "true"
     <false>: "false"
     <null> : 0    
+    <emptyList> :  <removeLine>
 defaultFormatter: yaml
 YAML;
         $reader = $this->buildReader($yaml);
@@ -142,6 +144,7 @@ YAML;
         $this->assertInstanceOf('Karma\Formatter', $reader->getFormatter()); // default
         $this->assertInstanceOf('Karma\Formatter', $reader->getFormatter('yaml'));
         $this->assertSame($reader->getFormatter(), $reader->getFormatter('yaml'));
+        $this->assertSame(Formatter::REMOVE_LINE, $reader->getFormatter('yaml')->getEmptyListStrategy());
     }
     
     /**
